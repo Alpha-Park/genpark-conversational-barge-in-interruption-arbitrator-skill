@@ -1,0 +1,34 @@
+{
+  "manifest_version": "0.3",
+  "name": "genpark-barge-in",
+  "version": "1.0.1",
+  "description": "Apply transcript, supplied echo score and duration rules to conversational interruptions; estimate playback truncation. No audio echo detection or playback control.",
+  "author": {
+    "name": "GenPark AI Engineering"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Alpha-Park/genpark-conversational-barge-in-interruption-arbitrator-skill"
+  },
+  "server": {
+    "type": "python",
+    "entry_point": "mcp_server.py",
+    "mcp_config": {
+      "command": "python",
+      "args": [
+        "${__dirname}/mcp_server.py"
+      ]
+    }
+  },
+  "compatibility": {
+    "platforms": [
+      "win32",
+      "darwin",
+      "linux"
+    ],
+    "runtimes": {
+      "python": ">=3.9"
+    }
+  }
+}

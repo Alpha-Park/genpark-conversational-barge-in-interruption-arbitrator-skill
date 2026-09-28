@@ -1,4 +1,4 @@
-import sys, json, math, time
+import sys, json, math, time, re
 
 class ConversationalBargeInArbitrator:
     """
@@ -22,7 +22,7 @@ class ConversationalBargeInArbitrator:
 
         # Check for urgent cutoffs or redirects
         command_cues = {"stop", "wait", "hold on", "cancel", "no", "actually", "change that", "what did you say"}
-        is_command = any(cue in text for cue in command_cues) or len(words) >= 3
+        is_command = any(re.search(r"\b" + re.escape(cue) + r"\b", text) for cue in command_cues) or len(words) >= 3
 
         return {
             "category": "DIRECTIVE_INTERRUPTION" if is_command else "UNSTRUCTURED_SPEECH",
@@ -60,6 +60,9 @@ class ConversationalBargeInArbitrator:
                 "reason": f"User uttered conversational backchannel '{incoming_transcript.strip()}'. Not interrupting agent."
             }
 
+        if not incoming_transcript.strip():
+            return {"decision": "AWAIT_CLARIFICATION", "action": "CONTINUE_PLAYBACK", "confidence": 0.60, "reason": "No transcript evidence of interruption."}
+
         # Scenario 4: True barge-in -> Truncate playback immediately
         if utterance_duration_ms >= self.min_barge_in_duration_ms or intent["is_command"]:
             return {
@@ -81,12 +84,10 @@ class ConversationalBargeInArbitrator:
         ratio = max(0.0, min(1.0, playback_progress_ratio))
         total_len = len(full_agent_script)
         spoken_chars = int(total_len * ratio)
-        spoken_text = full_agent_script[:spoken_chars]
+        if 0 < spoken_chars < total_len and not full_agent_script[spoken_chars].isspace() and not full_agent_script[spoken_chars-1].isspace():
+            spoken_chars = full_agent_script.rfind(" ", 0, spoken_chars) + 1
+        clean_spoken = full_agent_script[:spoken_chars]
         unspoken_text = full_agent_script[spoken_chars:]
-
-        # Find clean word boundary
-        last_space = spoken_text.rfind(" ")
-        clean_spoken = spoken_text[:last_space] if last_space != -1 else spoken_text
 
         return {
             "full_script_length": total_len,
